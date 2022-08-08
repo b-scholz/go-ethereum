@@ -92,7 +92,7 @@ type stateObject struct {
 	suicided  bool
 	deleted   bool
 
-	// Accessed storage addresses 
+	// Accessed storage addresses
 	AccessedStorage map[common.Hash]struct{}
 }
 
@@ -122,13 +122,13 @@ func newObject(db *StateDB, address common.Address, data Account) *stateObject {
 		data.Root = emptyRoot
 	}
 	return &stateObject{
-		db:             db,
-		address:        address,
-		addrHash:       crypto.Keccak256Hash(address[:]),
-		data:           data,
-		originStorage:  make(Storage),
-		pendingStorage: make(Storage),
-		dirtyStorage:   make(Storage),
+		db:              db,
+		address:         address,
+		addrHash:        crypto.Keccak256Hash(address[:]),
+		data:            data,
+		originStorage:   make(Storage),
+		pendingStorage:  make(Storage),
+		dirtyStorage:    make(Storage),
 		AccessedStorage: make(map[common.Hash]struct{}),
 	}
 }

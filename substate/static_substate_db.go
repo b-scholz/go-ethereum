@@ -16,7 +16,7 @@ var (
 	}
 	substateDir      = SubstateDirFlag.Value
 	staticSubstateDB *SubstateDB
-	RecordReplay bool = false
+	RecordReplay     bool = false
 )
 
 func OpenSubstateDB() {

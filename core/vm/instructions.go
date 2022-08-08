@@ -18,13 +18,12 @@ package vm
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/substate"
 	"github.com/holiman/uint256"
 	"golang.org/x/crypto/sha3"
-
 )
 
 func opAdd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
@@ -437,7 +436,7 @@ func opBlockhash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) (
 	num := scope.Stack.peek()
 	num64, overflow := num.Uint64WithOverflow()
 
-	if substate.RecordReplay { 
+	if substate.RecordReplay {
 		// convert vm.StateDB to state.StateDB and save block hash
 		defer func() {
 			statedb, ok := interpreter.evm.StateDB.(*state.StateDB)
