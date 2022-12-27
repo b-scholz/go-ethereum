@@ -174,11 +174,9 @@ func (s *stateObject) getTrie(db Database) Trie {
 
 // GetState retrieves a value from the account storage trie.
 func (s *stateObject) GetState(db Database, key common.Hash) common.Hash {
-	if substate.RecordReplay {
-		// mark keys touched by GetState
-		if _, exist := s.AccessedStorage[key]; !exist {
-			s.AccessedStorage[key] = struct{}{}
-		}
+	// mark keys touched by GetState
+	if _, exist := s.AccessedStorage[key]; !exist {
+		s.AccessedStorage[key] = struct{}{}
 	}
 	// If the fake storage is set, only lookup the state here(in the debugging mode)
 	if s.fakeStorage != nil {

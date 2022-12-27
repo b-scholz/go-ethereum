@@ -144,12 +144,10 @@ func New(root common.Hash, db Database, snaps *snapshot.Tree) (*StateDB, error) 
 		}
 	}
 
-	if substate.RecordReplay {
-		// init StateDB.Substate*
-		sdb.SubstatePreAlloc = make(substate.SubstateAlloc)
-		sdb.SubstatePostAlloc = make(substate.SubstateAlloc)
-		sdb.SubstateBlockHashes = make(map[uint64]common.Hash)
-	}
+	// init StateDB.Substate*
+	sdb.SubstatePreAlloc = make(substate.SubstateAlloc)
+	sdb.SubstatePostAlloc = make(substate.SubstateAlloc)
+	sdb.SubstateBlockHashes = make(map[uint64]common.Hash)
 
 	return sdb, nil
 }
@@ -508,20 +506,16 @@ func (s *StateDB) deleteStateObject(obj *stateObject) {
 // to differentiate between non-existent/just-deleted, use getDeletedStateObject.
 func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	if obj := s.getDeletedStateObject(addr); obj != nil && !obj.deleted {
-		if substate.RecordReplay {
-			// insert the account in StateDB.SubstatePreAlloc
-			if _, exist := s.SubstatePreAlloc[addr]; !exist {
-				s.SubstatePreAlloc[addr] = substate.NewSubstateAccount(obj.Nonce(), obj.Balance(), obj.Code(s.db))
-			}
+		// insert the account in StateDB.SubstatePreAlloc
+		if _, exist := s.SubstatePreAlloc[addr]; !exist {
+			s.SubstatePreAlloc[addr] = substate.NewSubstateAccount(obj.Nonce(), obj.Balance(), obj.Code(s.db))
 		}
  		return obj
  	}
-	if substate.RecordReplay {
-		// insert empty account in StateDB.SubstatePreAlloc
-		// This will prevent insertion of new account created in txs
-		if _, exist := s.SubstatePreAlloc[addr]; !exist {
-			s.SubstatePreAlloc[addr] = nil
-		}
+	// insert empty account in StateDB.SubstatePreAlloc
+	// This will prevent insertion of new account created in txs
+	if _, exist := s.SubstatePreAlloc[addr]; !exist {
+		s.SubstatePreAlloc[addr] = nil
 	}
 	return nil
 }
@@ -732,21 +726,20 @@ func (s *StateDB) Copy() *StateDB {
 		state.preimages[hash] = preimage
 	}
 
-	if substate.RecordReplay {
-		// copy StateDB.Substate*
-		state.SubstatePreAlloc = make(substate.SubstateAlloc)
-		state.SubstatePostAlloc = make(substate.SubstateAlloc)
-		state.SubstateBlockHashes = make(map[uint64]common.Hash)
-		for addr, account := range s.SubstatePreAlloc {
-			state.SubstatePreAlloc[addr] = account.Copy()
-		}
-		for addr, account := range s.SubstatePostAlloc {
-			state.SubstatePostAlloc[addr] = account.Copy()
-		}
-		for num64, bhash := range s.SubstateBlockHashes {
-			state.SubstateBlockHashes[num64] = bhash
-		}
+	// copy StateDB.Substate*
+	state.SubstatePreAlloc = make(substate.SubstateAlloc)
+	state.SubstatePostAlloc = make(substate.SubstateAlloc)
+	state.SubstateBlockHashes = make(map[uint64]common.Hash)
+	for addr, account := range s.SubstatePreAlloc {
+		state.SubstatePreAlloc[addr] = account.Copy()
 	}
+	for addr, account := range s.SubstatePostAlloc {
+		state.SubstatePostAlloc[addr] = account.Copy()
+	}
+	for num64, bhash := range s.SubstateBlockHashes {
+		state.SubstateBlockHashes[num64] = bhash
+	}
+
 	return state
 }
 
@@ -783,20 +776,18 @@ func (s *StateDB) GetRefund() uint64 {
 // the journal as well as the refunds. Finalise, however, will not push any updates
 // into the tries just yet. Only IntermediateRoot or Commit will do that.
 func (s *StateDB) Finalise(deleteEmptyObjects bool) {
-	if substate.RecordReplay {
-		// copy original storage values to Prestate and Poststate
-		for addr, sa := range s.SubstatePreAlloc {
-			if sa == nil {
-				delete(s.SubstatePreAlloc, addr)
-				continue
-			}
-
-			obj := s.stateObjects[addr]
-			for key := range obj.AccessedStorage {
-				sa.Storage[key] = obj.GetCommittedState(s.db, key)
-			}
-			s.SubstatePostAlloc[addr] = sa.Copy()
+	// copy original storage values to Prestate and Poststate
+	for addr, sa := range s.SubstatePreAlloc {
+		if sa == nil {
+			delete(s.SubstatePreAlloc, addr)
+			continue
 		}
+
+		obj := s.stateObjects[addr]
+		for key := range obj.AccessedStorage {
+			sa.Storage[key] = obj.GetCommittedState(s.db, key)
+		}
+		s.SubstatePostAlloc[addr] = sa.Copy()
 	}
 	for addr := range s.journal.dirties {
 		obj, exist := s.stateObjects[addr]
