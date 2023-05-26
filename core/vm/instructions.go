@@ -21,7 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/substate"
 	"github.com/holiman/uint256"
 	"golang.org/x/crypto/sha3"
 )
@@ -436,15 +435,13 @@ func opBlockhash(pc *uint64, interpreter *EVMInterpreter, callContext *callCtx) 
 	num := callContext.stack.peek()
 	num64, overflow := num.Uint64WithOverflow()
 
-	if substate.RecordReplay {
-		// convert vm.StateDB to state.StateDB and save block hash
-		defer func() {
-			statedb, ok := interpreter.evm.StateDB.(*state.StateDB)
-			if ok {
-				statedb.SubstateBlockHashes[num64] = common.BytesToHash(num.Bytes())
-			}
-		}()
-	}
+	// convert vm.StateDB to state.StateDB and save block hash
+	defer func() {
+		statedb, ok := interpreter.evm.StateDB.(*state.StateDB)
+		if ok {
+			statedb.SubstateBlockHashes[num64] = common.BytesToHash(num.Bytes())
+		}
+	}()
 
 	if overflow {
 		num.Clear()

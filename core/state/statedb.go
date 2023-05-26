@@ -812,19 +812,15 @@ func (s *StateDB) Finalise(deleteEmptyObjects bool) {
 				delete(s.snapAccounts, obj.addrHash)       // Clear out any previously updated account data (may be recreated via a ressurrect)
 				delete(s.snapStorage, obj.addrHash)        // Clear out any previously updated storage data (may be recreated via a ressurrect)
 			}
-			if substate.RecordReplay {
-				// delete account from StateDB.SubstatePostAlloc
-				delete(s.SubstatePostAlloc, addr)
-			}
+			// delete account from StateDB.SubstatePostAlloc
+			delete(s.SubstatePostAlloc, addr)
 		} else {
-			if substate.RecordReplay {
-				// copy dirty account to StateDB.SubstatePostAlloc
-				sa := substate.NewSubstateAccount(obj.Nonce(), obj.Balance(), obj.Code(s.db))
-				for key := range obj.AccessedStorage {
-					sa.Storage[key] = obj.GetState(s.db, key)
-				}
-				s.SubstatePostAlloc[addr] = sa
+			// copy dirty account to StateDB.SubstatePostAlloc
+			sa := substate.NewSubstateAccount(obj.Nonce(), obj.Balance(), obj.Code(s.db))
+			for key := range obj.AccessedStorage {
+				sa.Storage[key] = obj.GetState(s.db, key)
 			}
+			s.SubstatePostAlloc[addr] = sa
 			obj.finalise()
 		}
 		s.stateObjectsPending[addr] = struct{}{}
@@ -867,14 +863,12 @@ func (s *StateDB) Prepare(thash, bhash common.Hash, ti int) {
 	s.bhash = bhash
 	s.txIndex = ti
 
-	if substate.RecordReplay {
-		// reset StateDB.Substate* and stateObject.Substate*
-		s.SubstatePreAlloc = make(substate.SubstateAlloc)
-		s.SubstatePostAlloc = make(substate.SubstateAlloc)
-		s.SubstateBlockHashes = make(map[uint64]common.Hash)
-		for _, obj := range s.stateObjects {
-			obj.AccessedStorage = make(map[common.Hash]struct{})
-		}
+	// reset StateDB.Substate* and stateObject.Substate*
+	s.SubstatePreAlloc = make(substate.SubstateAlloc)
+	s.SubstatePostAlloc = make(substate.SubstateAlloc)
+	s.SubstateBlockHashes = make(map[uint64]common.Hash)
+	for _, obj := range s.stateObjects {
+		obj.AccessedStorage = make(map[common.Hash]struct{})
 	}
 
 }

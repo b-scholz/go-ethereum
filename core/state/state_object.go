@@ -27,7 +27,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/substate"
 )
 
 var emptyCodeHash = crypto.Keccak256(nil)
@@ -298,10 +297,8 @@ func (s *stateObject) finalise() {
 	if len(s.dirtyStorage) > 0 {
 		s.dirtyStorage = make(Storage)
 	}
-	if substate.RecordReplay {
-		// clear stateObject.AccessedStorage
-		s.AccessedStorage = make(map[common.Hash]struct{})
-	}
+	// clear stateObject.AccessedStorage
+	s.AccessedStorage = make(map[common.Hash]struct{})
 }
 
 // updateTrie writes cached storage modifications into the object's storage trie.
@@ -439,12 +436,10 @@ func (s *stateObject) deepCopy(db *StateDB) *stateObject {
 	stateObject.dirtyCode = s.dirtyCode
 	stateObject.deleted = s.deleted
 
-	if substate.RecordReplay {
-		// deepCopy stateObject.AccessedStorage
-		stateObject.AccessedStorage = make(map[common.Hash]struct{})
-		for key := range s.AccessedStorage {
-			stateObject.AccessedStorage[key] = struct{}{}
-		}
+	// deepCopy stateObject.AccessedStorage
+	stateObject.AccessedStorage = make(map[common.Hash]struct{})
+	for key := range s.AccessedStorage {
+		stateObject.AccessedStorage[key] = struct{}{}
 	}
 
 	return stateObject
